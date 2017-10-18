@@ -1,0 +1,9 @@
+login module - done
+shop module - problem
+inventory module - done
+add product -done
+search and update module - update missing
+reports module - snippet ready
+user control module - done
+routing - done
+register module - done
