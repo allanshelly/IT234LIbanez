@@ -56,6 +56,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                     <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Shop</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
+                        
                     </div>
                       <!--Cart-->
                     <div class="tab-pane fade" id="cart" role="tabpanel" aria-labelledby="sales-tab">
