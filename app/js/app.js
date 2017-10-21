@@ -6,4 +6,6 @@ $(document).ready(function(){
     if(activeTab){
         $('#navTab a[href="' + activeTab + '"]').tab('show');
     }
+    
 });
+}

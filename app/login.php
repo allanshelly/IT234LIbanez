@@ -3,7 +3,7 @@ include "config.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<title>Login - Sales and Inventory System</title>
+<title>Login - Tindahan ni Maya</title>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -16,6 +16,7 @@ include "config.php";
     <script src="js/popper.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/jquery.arctext.js"></script>
   </head>
   <body id="body">
     <div class="container">
@@ -23,7 +24,13 @@ include "config.php";
         <div class="col"></div>
         <div class="col">
           <div class="jumbotron" style="background-color: rgba(255,255,255,0.5); margin-top: 35%; padding-top: 10%; padding-bottom: 15%; margin-bottom: 1%;">
+            <div id="storename" class="text-center text-primary font-weight-bold font-italic"><strong>Tindahan ni Maya</strong></div>
             <div class="text-center"><img src="res/avatar.png" class="rounded-circle"></div>
+            <script>
+              $().ready(function() {
+                  $('#storename').arctext({radius: 60})
+              });
+            </script>
             <br>
             <?php 
               if(isset($_POST['btnSignin'])){
@@ -52,11 +59,11 @@ include "config.php";
               <div class="form-group">
                 <input type="password" name="pass" placeholder="Password" class="form-control" required>
               </div>
-              <button class="btn btn-md btn-primary btn-block" type="submit" name="btnSignin">Sign in</button>
+              <button class="form-control btn btn-sm btn-primary btn-block" type="submit" name="btnSignin">Sign in</button>
             </form>
             <br>
             <div class="text-center">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#regModal" id="regbtn">Register</button>
+            <button type="button" class="form-control btn-sm btn-primary" data-toggle="modal" data-target="#regModal" id="regbtn">Register</button>
             <!--Register Modal -->
             <div class="modal fade" id="regModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
               <div class="modal-dialog" role="document">

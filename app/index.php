@@ -23,7 +23,18 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<title>App - Sales and Inventory System</title>
+<?php 
+  if($_SESSION['type'] == 'user'){
+?>
+    <title>Shop - Tindahan ni Maya</title>
+<?php
+}
+  if($_SESSION['type'] == 'admin'){
+?>
+    <title>Admin - Tindahan ni Maya</title>
+<?php
+  }
+?>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -32,18 +43,32 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/datatable.min.css">
+    <script src="js/jquery.js"></script>
+    <script src="js/popper.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/jquery.arctext.js"></script>
+    <script src="js/jquery.datatable.js"></script>
   </head>
   <body>
     <div class="container">
       <div class="row">
         <div class="col">
-          <div class="jumbotron" style="background-color: rgba(255,255,255,0.9); height: 100%; margin-bottom: 5%; margin-top: 5%; padding-top: 3%; padding-bottom: 3%;">
+          <div class="jumbotron" style="background-color: rgba(255,255,255,1); height: 100%; margin-bottom: 5%; margin-top: 5%; padding-top: 3%; padding-bottom: 3%;">
             <div class="row">
               <div class="jumbotron" style="background-color: rgba(255,255,255,0.0); width: 20%; padding-top: 5%;">
                 <ul class="nav flex-column nav-pills" id="navTab">
                   <?php 
                     if($_SESSION['type'] == 'user'){
                   ?>
+                  <div id="storename" class="text-center text-primary font-weight-bold font-italic"><strong>Tindahan ni Maya</strong></div>
+                    <div class="text-center"><img src="res/avatar.png" class="rounded-circle"></div>
+                    <script>
+                      $().ready(function() {
+                          $('#storename').arctext({radius:60})
+                      });
+                    </script>
                   <li><a href="#sales" class="nav-link" data-toggle="tab">Shop</a></li>
                   <li><a href="#cart" class="nav-link" data-toggle="tab">Cart</a></li>
                   <li><a class="nav-link" href="logout.php">Logout</a></li>
@@ -56,12 +81,120 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                     <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Shop</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
-                        
+                            <table class="table" id="storetable">
+                              <thead>
+                                <tr class="text-primary">
+                                  <th>Product Image</th>
+                                  <th>Product Name</th>
+                                  <th>Product Price</th>
+                                  <th>Product Description</th>
+                                  <th>&nbsp;</th>
+                                </tr>
+                              </thead>
+                            <?php
+                            $items = loadShop();
+                            for($x = 0;$x<count($items,COUNT_NORMAL); $x++){
+                              if($items[$x]["prod_quan"]==0){
+
+                              }
+                              else{
+                                $img = "products/".$items[$x]['prod_img'].".jpg";
+                              ?>
+                                <tr>
+                                  <td class="text-center"><img src="<?php echo $img ?>" style="max-width: auto; max-height: 120px;"></td>
+                                  <td><?php echo $items[$x]["prod_name"]; ?></td>
+                                  <td><?php echo $items[$x]["prod_price"]; ?></td>
+                                  <td><?php echo $items[$x]["prod_desc"]?></td>
+                                  <td class="text-center">
+                                    <br><br>
+                                    <button type="button" class="form-control btn-sm btn-primary" data-toggle="modal" data-target="<?php echo "#".$items[$x]['prod_name'] ?>" id="regbtn">Add to Cart</button>
+                                  </td>
+                                </tr>
+                                <div class="modal fade" id=<?php echo $items[$x]['prod_name'] ?> tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                  <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                      <div class="modal-header">
+                                        <h5 class="modal-title text-primary" id="exampleModalLabel">Add to Cart</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                          <span aria-hidden="true">&times;</span>
+                                        </button>
+                                      </div>
+                                      <div class="modal-body">
+                                        <?php
+                                          if (isset($_POST[$x])) {
+                                            addtoCart($items[$x]["prod_id"],$_SESSION["id"],$items[$x]["prod_price"]);
+                                          }
+                                        ?>
+                                        <div class="row">
+                                          <div class="col">
+                                            <img src="<?php echo $img; ?>" class="img-thumbnail">
+                                          </div>
+                                          <div class="col">
+                                            <div>
+                                              <small>
+                                                <div class="text-primary">Product Name:&nbsp;</div><?php echo $items[$x]["prod_name"]; ?><hr>
+                                                <div class="text-primary">Product Description:&nbsp;</div><?php echo $items[$x]["prod_desc"]; ?><hr>
+                                                <div class="text-primary">Product Price:&nbsp;</div><?php echo $items[$x]["prod_price"]; ?>
+                                              </small>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                                        <form action="" method="post"><input type="submit" name="<?php echo $x; ?>" value="Add to Cart" class="btn btn-primary btn-sm"></form>
+                                      </div>
+                              <?php
+                              }
+                            }
+                            ?>
+                            </table>
+                          <script type="text/javascript">
+                            var table = $('#storetable').DataTable();
+                            table.page.len(4).draw();
+                          </script>
                     </div>
                       <!--Cart-->
                     <div class="tab-pane fade" id="cart" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Cart</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
+                          <table class="table">
+                            <thead class="text-primary">
+                              <tr>
+                                <td><strong>Product Image</strong></td>
+                                <td><strong>Product Name</strong></td>
+                                <td><strong>Product Price</strong></td>
+                                <td><strong>Product Quantity</strong></td>
+                                <td><strong>Total</strong></td>
+                              </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                              $total = 0; 
+                              $cart = getCart();
+                              for($x = 0; $x<count($cart,COUNT_NORMAL);$x++){
+                                $img = getImg($cart[$x]["prod_id"]);
+                                $name = getName($cart[$x]["prod_id"]);
+                                $price = getPrice($cart[$x]["prod_id"]);
+                                $total = $total+$cart[$x]["total"];
+                            ?>
+                                <tr>
+                                  <td class="text-center"><img src="<?php echo $img ?>" style="max-width: auto; max-height: 120px;"></td>
+                                  <td><?php echo $name ?></td>
+                                  <td><?php echo $price?></td>
+                                  <td><?php echo $cart[$x]["item_quan"] ?></td>
+                                  <td><?php echo $cart[$x]["total"]?></td>
+                                </tr>
+                            <?php
+                              }
+                            ?>
+                            <tr>
+                              <td class="text-primary text-left" colspan="4"><strong>Total</strong></td>
+                              <td><strong><?php echo $total?></strong></td>
+                            </tr>
+                          </tbody>
+                          </table>
+                          
                     </div>
                   </div>
                 </div>
@@ -198,7 +331,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 <hr>
                                 <div class="form-row">
                                   <div class="col">
-                                    <label for="pic" class="text-primary">Product Images</label>
+                                    <label for="pic" class="text-primary">Product Image</label>
                                     <input id="pic" type="file" class="form-control" style="border: none;" name="pic" 
                                      accept="image/*" required>
                                   </div>
@@ -226,7 +359,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 <form action="" method="post">
                                   <div class="form-inline">
                                     <div class="col">
-                                      <input type="text" name="searchname" class="form-control" placeholder="Product Name" style="width: 100%;"">
+                                      <input type="text" name="searchname" class="form-control" placeholder="Product Name/ID" style="width: 100%;"">
                                     </div>
                                     <div class="col">
                                       <input type="submit" name="stocksearch" class="form-control btn btn-primary btn-md float-right" value="Search">
@@ -490,9 +623,6 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
     </div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="js/jquery.js"></script>
-    <script src="js/popper.js"></script>
-    <script src="js/bootstrap.js"></script>
-    <script src="js/app.js"></script>
+
   </body>
 </html>
