@@ -1,8 +1,11 @@
 login module - done
-shop module - problem
+shop module - done
 inventory module - done
 add product -done
-search and update module - update missing
+cart module - done
+pay module - missing
+update stocks after paying - missing
+search and update module - done
 reports module - snippet ready
 user control module - done
 routing - done
