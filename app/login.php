@@ -83,7 +83,7 @@ $func = new Funcs;
                         $uname = $_POST['uname'];
                         $pass = sha1($_POST['pword']);
                         $type = strtolower('user');
-                        $register = addUser($fname,$lname,$uname,$pass,$type);
+                        $register = $func->addUser($fname,$lname,$uname,$pass,$type);
                         if($register == true){
                       ?>
                         <script type="text/javascript">

@@ -18,6 +18,7 @@ class Funcs{
 	    $_SESSION['id'] = $id;
 	    $_SESSION['type'] = $type;
 	    $_SESSION['log'] = 0;
+	    $_SESSION['pay'] = false;
 	  	return true;
 	  }
 	  else{
@@ -161,6 +162,9 @@ class Funcs{
 			$stmt->bindParam(4,$price);
 			$stmt->bindParam(5,$stat);
 			$stmt->execute();
+			if(!$stmt){
+				print_r($db->errorInfo());
+			}
 		}
 		else{
 			$stmt = $db->prepare("UPDATE cart SET item_quan=item_quan+1 WHERE prod_id=? AND user_id=?");
@@ -178,6 +182,9 @@ class Funcs{
 			$stmt->bindParam(2,$prodid);
 			$stmt->bindParam(3,$userid);
 			$stmt->execute();
+			if(!$stmt){
+				print_r($db->errorInfo());
+			}
 		}
 	}
 	function getCart(){
@@ -239,5 +246,88 @@ class Funcs{
 		$stmt->bindParam(1,$prodid);
 		$stmt->execute();
 	}
+	function updateItem($prodid,$quan,$userid){
+		$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
+		$stmt = $db->prepare("UPDATE cart SET item_quan=? WHERE prod_id=? AND user_id=?");
+		$stmt->bindParam(1,$quan);
+		$stmt->bindParam(2,$prodid);
+		$stmt->bindParam(3,$userid);
+		$stmt->execute();
+		$stmt = $db->prepare("SELECT prod_price FROM stock WHERE prod_id=?");
+		$stmt->bindParam(1,$prodid);
+		$stmt->execute();
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		$price = $quan * $row["prod_price"];
+		$stmt = $db->prepare("UPDATE cart SET total=? WHERE prod_id=? AND user_id=?");
+		$stmt->bindParam(1,$price);
+		$stmt->bindParam(2,$prodid);
+		$stmt->bindParam(3,$userid);
+		$stmt->execute();
+	}
+	function pay($userid,$total,$date,$name,$address){
+		$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
+		$stmt = $db->prepare("INSERT INTO sales (total,buyer_id,consignee_name,date_purchased,delivery_address) VALUES(?,?,?,?,?)");
+		$stmt->bindParam(1,$total);
+		$stmt->bindParam(2,$userid);
+		$stmt->bindParam(3,$name);
+		$stmt->bindParam(4,$date);
+		$stmt->bindParam(5,$address);
+		$stmt->execute();
+		$stmt = $db->prepare("UPDATE cart SET status='paid' WHERE user_id=?");
+		$stmt->bindParam(1,$userid);
+		$stmt->execute();
+		$stmt = $db->prepare("SELECT * FROM cart WHERE status='paid' AND user_id=?");
+		$stmt->bindParam(1,$userid);
+		$stmt->execute();
+		$row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		for($x = 0; $x<count($row,COUNT_NORMAL);$x++){
+			$stmt = $db->prepare("SELECT * FROM stock WHERE prod_id=?");
+			$stmt->bindParam(1,$row[$x]["prod_id"]);
+			$stmt->execute();
+			$prodcount = $stmt->fetch(PDO::FETCH_ASSOC);
+			$stockleft = $prodcount["prod_quan"] - $row[$x]["item_quan"];
+			$stmt = $db->prepare("UPDATE stock SET prod_quan=? WHERE prod_id=?");
+			$stmt->bindParam(1,$stockleft);
+			$stmt->bindParam(2,$row[$x]["prod_id"]);
+			$stmt->execute();
+			$stmt = $db->prepare("SELECT sold FROM stock WHERE prod_id=?");
+			$stmt->bindParam(1,$row[$x]["prod_id"]);
+			$stmt->execute();
+			$sold = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			$totalsold = $sold["sold"] + $row[$x]["item_quan"];
+			$stmt = $db->prepare("UPDATE stock SET sold=? WHERE prod_id=?");
+			$stmt->bindParam(1,$totalsold);
+			$stmt->bindParam(2,$row[$x]["prod_id"]);
+			$stmt->execute();
+		}
+	}
+	function viewUsers(){
+		$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
+		$stmt = $db->prepare("SELECT * FROM users");
+		$stmt->execute();
+		$row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		return $row;
+	}
+	function getReport(){
+		$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
+		$stmt = $db->prepare("SELECT * FROM stock");
+		$stmt->execute();
+		$row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		return $row;	
+	}
+function getSales(){
+	$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
+	$stmt = $db->prepare("SELECT SUM(total) AS totalsales FROM sales");
+	$stmt->execute();
+	$row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	echo $row[0]["totalsales"];
+}
+function getSold(){
+	$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
+	$stmt = $db->prepare("SELECT SUM(sold) AS totalsold FROM stock");
+	$stmt->execute();
+	$row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	echo $row[0]["totalsold"];
+}
 }
 ?>

@@ -123,7 +123,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                       <div class="modal-body">
                                         <?php
                                           if (isset($_POST[$x])) {
-                                            addtoCart($items[$x]["prod_id"],$_SESSION["id"],$items[$x]["prod_price"]);
+                                            $func->addtoCart($items[$x]["prod_id"],$_SESSION["id"],$items[$x]["prod_price"]);
                             ?>
                                             <script type="text/javascript">
                                               window.location.href = 'http://localhost/inventory%20final/app/index.php';
@@ -165,8 +165,18 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                       <h3 class="text-primary"><small>Cart</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
                             <?php
-                              $total = 0; 
                               $cart = $func->getCart();
+                              if($_SESSION['pay'] == true){
+                                ?>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <strong>Items on the way!</strong>
+                                </div>
+                                <?php
+                                $_SESSION['pay'] = false;
+                              }
                               if($cart == NULL){
                           ?>
                                 <br>
@@ -180,10 +190,10 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 <table class="table">
                                   <thead class="text-primary">
                                     <tr>
-                                      <td><strong>Product Image</strong></td>
-                                      <td><strong>Product Name</strong></td>
-                                      <td><strong>Product Price</strong></td>
-                                      <td><strong>Product Quantity</strong></td>
+                                      <td><small><strong>Product Image</strong></small></td>
+                                      <td><small><strong>Product Name</strong></small></td>
+                                      <td><small><strong>Product Price</strong></small></td>
+                                      <td><small><strong>Product Quantity</strong></small></td>
                                       <td></td>
                                     </tr>
                                   </thead>
@@ -195,17 +205,30 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 $price = $func->getPrice($cart[$x]["prod_id"]);
                             ?>
                                   <tr>
+                                    <form method="POST" action="">
                                     <td class="text-center"><img src="<?php echo $img ?>" style="max-width: auto; max-height: 120px;"></td>
                                     <td><?php echo $name ?></td>
                                     <td><?php echo $price?></td>
                                     <td><input type="number" name="<?php echo 'quan'.$x?>" class='form-control form-control-sm' value='<?php echo $cart[$x]["item_quan"] ?>' min="1" max="<?php $func->getStockCount($cart[$x]["prod_id"])?>"></td>
                                     <td>
                                       <form method="POST" action="">
+                                        <input class="btn btn-primary btn-sm" type="submit" name="<?php echo 'up'.$x ?>" value="Update">
+                                      </form>
+                                    </td>
+                                    <td>
                                         <input class="btn btn-primary btn-sm" type="submit" name="<?php echo 'rem'.$x ?>" value="Remove From Cart">
                                       </form>
                                     </td>
                                   </tr>
                             <?php
+                                  $update = 'up'.$x;
+                                  if (isset($_POST[$update])) {
+                                    $q = "quan".$x;
+                                    $func->updateItem($cart[$x]['prod_id'],$_POST[$q],$cart[$x]['user_id']);
+                            ?>
+                                    <script type="text/javascript">
+                                      window.location.href = 'http://localhost/inventory%20final/app/index.php';
+                                    </script>
                                   $rem = 'rem'.$x;
                                   if (isset($_POST[$rem])) {
                                     $func->removeItem($cart[$x]['prod_id'],$cart[$x]['user_id']);
@@ -218,7 +241,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 }
                             ?>
                             <tr>
-                              <td colspan="4"></td>
+                              <td colspan="5"></td>
                               <td class="text-center">
                                   <button class="form-control btn btn-primary btn-sm" data-toggle="modal" data-target="#checkoutmodal">Check Out</button>
                               </td>
@@ -229,7 +252,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                             }
                           ?>
                           <div class="modal fade" id="checkoutmodal" tabindex="-1" role="dialog" aria-labelledby="checkoutmodal" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
+                            <div class="modal-dialog modal-lg" role="document">
                               <div class="modal-content">
                                 <div class="modal-header">
                                   <h5 class="modal-title text-primary" id="exampleModalLabel">Check Out</h5>
@@ -237,13 +260,77 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                     <span aria-hidden="true">&times;</span>
                                   </button>
                                 </div>
-                                <div class="modal-body">
-                                  sadasdas
-                                </div>
+                                <div class="modal-body ">
+                                    <table class="table">
+                                      <tr class="text-center text-primary">
+                                        <td></td>
+                                        <td><small>Product Name</small></td>
+                                        <td><small>Product Price</small></td>
+                                        <td><small>Quantity</small></td>
+                                        <td><small><strong>Total</strong></small></td>
+                                      </tr>
+                                      <?php
+                                        $subtotal = 0;
+                                        $cart = $func->getCart();
+                                        for ($i=0; $i <count($cart,COUNT_NORMAL) ; $i++) { 
+                                          $img = $func->getImg($cart[$i]["prod_id"]);
+                                          $name = $func->getName($cart[$i]["prod_id"]);
+                                          $price = $func->getPrice($cart[$i]["prod_id"]);
+                                          $subtotal = $subtotal + $cart[$i]["total"];
+                                          ?>
+                                            <tr class="text-primary text-center">
+                                              <td>
+                                                <img src="<?php echo $img ?>" style="max-width: auto; max-height: 120px;">
+                                              </td>
+                                              <td><?php echo $name;?></td>
+                                              <td><?php echo $price;?></td>
+                                              <td><?php echo $cart[$i]["item_quan"] ?></td>
+                                              <td><?php echo $cart[$i]["total"] ?></td>
+                                            </tr>
+                                          <?php
+                                        }
+                                      ?>
+                                      <tr class="text-primary">
+                                        <td colspan="4" class="text-right"><small><strong>Sub Total</strong></small></td>
+                                        <td class="text-center"><?php echo $subtotal?></td>
+                                      </tr>
+                                    </table>
+                                    <hr>
+                                    <form action="" method="POST">
+                                      <div class="form-row">
+                                        <div class="col">
+                                          <input type="text-center" name="address" class="form-control form-control-sm" placeholder="Delivery Address" required>
+                                        </div>
+                                        <div class="col">
+                                          <input type="text-center" name="name" class="form-control form-control-sm" placeholder="Consignee Name" required>
+                                        </div>
+                                        <div class="col">
+                                          <input type="number" name="money" class="form-control form-control-sm" placeholder="Bring Change for" required>
+                                        </div>
+                                        <div class="col">
+                                          <input type="submit" name="pay" value="Deliver" class="form-control btn btn-primary btn-sm">
+                                        </div>
+                                      </div>
+                                    </form>
+                                    <?php 
+                                      if(isset($_POST["pay"])){
+                                        date_default_timezone_set('Asia/Manila');
+                                        $func->pay($_SESSION['id'],$subtotal,date('Y-m-d'),$_POST["name"],$_POST["address"]);
+                                        ?>
+                                      <script type="text/javascript">
+                                        window.location.href = 'http://localhost/inventory%20final/app/index.php';
+                                        $(window).on('load',function(){
+                                             $('#delivermodal').modal('show');
+                                         });
+                                      </script>
+                                        <?php
+                                        $_SESSION['pay'] = true;
+                                      }
+                                    ?>
                               </div>
                             </div>
                           </div>
-                    </div>
+                      </div>
                   </div>
                 </div>
               </div>
@@ -251,6 +338,8 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                   }
                   else{
                   ?>
+                  <script src="js/chart.min.js"></script>
+                  <script src="js/graph.js"></script>
                   <div id="storename" class="text-center text-primary font-weight-bold font-italic"><strong>Tindahan ni Maya</strong></div>
                     <div class="text-center"><img src="res/avatar.png" class="rounded-circle"></div>
                     <script>
@@ -365,13 +454,13 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                     <input type="text" class="form-control" placeholder="Product Name" name="pname" required>
                                   </div>
                                   <div class="col">
-                                    <input type="text" class="form-control" placeholder="Product Price" name="price" required>
+                                    <input type="number" class="form-control" placeholder="Product Price" name="price" required>
                                   </div>
                                 </div>
                                 <hr>
                                 <div class="form-row">
                                   <div class="col">
-                                    <input type="text" class="form-control" placeholder="Quantity" name="quan" required>
+                                    <input type="number" class="form-control" placeholder="Quantity" name="quan" required>
                                   </div>
                                   <div class="col">
                                     <input type="text" class="form-control" placeholder="Supplier" name="supplier" required>
@@ -524,155 +613,244 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                     <div class="tab-pane" id="reports" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Reports</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
+                        <style>
+                          .chart-container{
+                            width: 95%;
+                            height: auto;
+                          }
+                        </style>
+                        <div class="chart-container">
+                          <canvas id="canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                          <canvas id="canvas2"></canvas>
+                        </div>
+                        <br>
+                        <hr>
+                        <div class="text-primary">
+                          <h2 class="text-center"><small>Sales Report</small></h2>
+                          <div class="text-left">
+                            <table class="table">
+                              <thead class="text-primary">
+                                <tr>
+                                  <td><small><strong>Product Name</strong></small></td>
+                                  <td><small><strong>Price</strong></small></td>
+                                  <td><small><strong>In Stock</strong></small></td>
+                                  <td><small><strong>Sold</strong></small></td>
+                                </tr>
+                              </thead>
+                              <tbody>
+                              <?php 
+                                $reports = $func->getReport();
+                                for ($i=0; $i <count($reports,COUNT_NORMAL) ; $i++) {
+                                ?>
+                                  <tr class="text-primary">
+                                    <td><small><?php echo $reports[$i]["prod_name"]?></small></td>
+                                    <td><small><?php echo $reports[$i]["prod_price"]?></small></td>
+                                    <td><small><?php echo $reports[$i]["prod_quan"]?></small></td>
+                                    <td><small><?php echo $reports[$i]["sold"]?></small></td>
+                                  </tr>
+                                <?php
+                                }
+                              ?>
+                              </tbody>
+                            </table>
+                            <p class="text-primary">
+                              Total Amount of Sales: <?php $func->getSales(); ?><br>
+                              Total Number of Products Sold: <?php $func->getSold(); ?>
+                              <hr>
+                            </p>
+                          </div>
+                        </div>
                     </div>
                     <!--Users-->
                     <div class="tab-pane" id="users" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Users</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
-                        <div id="accordion" role="tablist">
-                        <div class="card">
-                          <div class="card-header" role="tab" id="headingOne">
-                            <h5 class="mb-0">
-                              <a data-toggle="collapse" href="#addUser" aria-expanded="true" aria-controls="collapseOne">
-                                Add Admin
-                              </a>
-                            </h5>
-                          </div>
-                          <div id="addUser" class="collapse" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion">
-                            <div class="card-body">
-                              <?php 
-                                if(isset($_POST['addUser'])){
-                                  $uname = $_POST['uname'];
-                                  $pass = sha1($_POST['pword']);
-                                  $fname = $_POST['fname'];
-                                  $lname = $_POST['lname'];
-                                  $type = strtolower($_POST['type']);
-                                  $adduser = $func->addUser($fname,$lname,$uname,$pass,$type);
-                                  if($adduser == true){
-                                    ?>
-                                    <script type="text/javascript">
-                                      document.getElementById("addUser").classList.add('show');
-                                    </script>
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                      </button>
-                                      <strong>User successfully added!</strong>
-                                    </div>
-                                    <?php
+                        <div id="accordion1" role="tablist">
+                          <div class="card">
+                            <div class="card-header" role="tab" id="headingOne">
+                              <h5 class="mb-0">
+                                <a data-toggle="collapse" href="#addUser" aria-expanded="true" aria-controls="collapseOne">
+                                  Add Admin
+                                </a>
+                              </h5>
+                            </div>
+                            <div id="addUser" class="collapse" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion1">
+                              <div class="card-body">
+                                <?php 
+                                  if(isset($_POST['addUser'])){
+                                    $uname = $_POST['uname'];
+                                    $pass = sha1($_POST['pword']);
+                                    $fname = $_POST['fname'];
+                                    $lname = $_POST['lname'];
+                                    $type = strtolower($_POST['type']);
+                                    $adduser = $func->addUser($fname,$lname,$uname,$pass,$type);
+                                    if($adduser == true){
+                                      ?>
+                                      <script type="text/javascript">
+                                        document.getElementById("addUser").classList.add('show');
+                                      </script>
+                                      <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                          <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <strong>User successfully added!</strong>
+                                      </div>
+                                      <?php
+                                    }
+                                    else{
+                                      ?>
+                                      <script type="text/javascript">
+                                        document.getElementById("addUser").classList.add('show');
+                                      </script>
+                                      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                          <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <strong>User already exists!</strong>
+                                      </div>
+                                      <?php
+                                    }
                                   }
-                                  else{
-                                    ?>
-                                    <script type="text/javascript">
-                                      document.getElementById("addUser").classList.add('show');
-                                    </script>
-                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                      </button>
-                                      <strong>User already exists!</strong>
+                                ?>
+                                <form method="post" action="">
+                                  <div class="form-row">
+                                    <div class="col">
+                                      <input type="text" class="form-control" placeholder="First name" name="fname" required>
                                     </div>
-                                    <?php
-                                  }
-                                }
-                              ?>
-                              <form method="post" action="">
-                                <div class="form-row">
-                                  <div class="col">
-                                    <input type="text" class="form-control" placeholder="First name" name="fname" required>
+                                    <div class="col">
+                                      <input type="text" class="form-control" placeholder="Last name" name="lname" required>
+                                    </div>
                                   </div>
-                                  <div class="col">
-                                    <input type="text" class="form-control" placeholder="Last name" name="lname" required>
+                                  <hr>
+                                  <div class="form-row">
+                                    <div class="col">
+                                      <input type="text" class="form-control" placeholder="Username" name="uname" required>
+                                    </div>
+                                    <div class="col">
+                                      <input type="password" class="form-control" placeholder="Password" name="pword" required>
+                                    </div>
                                   </div>
-                                </div>
-                                <hr>
-                                <div class="form-row">
-                                  <div class="col">
-                                    <input type="text" class="form-control" placeholder="Username" name="uname" required>
+                                  <hr>
+                                  <div class="form-row">
+                                    <div class="col">
+                                      <input type="submit" class="btn btn-primary btn-sm float-right" value="Add User" name="addUser">
+                                    </div>
                                   </div>
-                                  <div class="col">
-                                    <input type="password" class="form-control" placeholder="Password" name="pword" required>
-                                  </div>
-                                </div>
-                                <hr>
-                                <div class="form-row">
-                                  <div class="col">
-                                    <input type="submit" class="btn btn-primary btn-sm float-right" value="Add User" name="addUser">
-                                  </div>
-                                </div>
-                              </form>
+                                </form>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                          <div class="card">
+                            <div class="card-header" role="tab" id="headingTwo">
+                              <h5 class="mb-0">
+                                <a class="collapsed" data-toggle="collapse" href="#delUser" aria-expanded="false" aria-controls="collapseTwo">
+                                  Delete User
+                                </a>
+                              </h5>
+                            </div>
+                            <div id="delUser" class="collapse" role="tabpanel" aria-labelledby="headingTwo" data-parent="#accordion1">
+                              <div class="card-body">
+                                <?php 
+                                  if (isset($_POST['deleteUser'])) {
+                                    $username = $_POST['unamedel'];
+                                    if($_SESSION['username'] == $username){
+                                      ?>
+                                      <script type="text/javascript">
+                                        document.getElementById("collapseTwo").classList.add('show');
+                                        rel();
+                                      </script>
+                                      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                          <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <strong>Cannot delete own account!</strong>
+                                      </div>
+                                      <?php
+                                    }
+                                    else{
+                                    $delete = $func->deleteUser($username);
+                                    if($delete == true){
+                                      ?>
+                                      <script type="text/javascript">
+                                        document.getElementById("delUser").classList.add('show');
+                                        rel();
+                                      </script>
+                                      <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                          <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <strong>User deleted!</strong>
+                                      </div>
+                                      <?php
+                                    }
+                                    else{
+                                      ?>
+                                      <script type="text/javascript">
+                                        document.getElementById("collapseTwo").classList.add('show');
+                                      </script>
+                                      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                          <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <strong>User does not exists!</strong>
+                                      </div>
+                                      <?php
+                                    }
+                                    }
+                                  }
+                                ?>
+                                <form method="post" action="">
+                                  <div class="form-row">
+                                    <div class="col">
+                                      <input type="text" class="form-control" placeholder="Username" name="unamedel" required>
+                                    </div>
+                                    <div class="col">
+                                      <input type="submit" class="btn btn-primary btn-sm float-right" value="Delete User" name="deleteUser" required>
+                                    </div>
+                                  </div>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
                         <div class="card">
-                          <div class="card-header" role="tab" id="headingTwo">
+                          <div class="card-header" role="tab" id="headingThree">
                             <h5 class="mb-0">
-                              <a class="collapsed" data-toggle="collapse" href="#delUser" aria-expanded="false" aria-controls="collapseTwo">
-                                Delete User
+                              <a class="collapsed" data-toggle="collapse" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                View Users
                               </a>
                             </h5>
                           </div>
-                          <div id="delUser" class="collapse" role="tabpanel" aria-labelledby="headingTwo" data-parent="#accordion">
+                          <div id="collapseThree" class="collapse" role="tabpanel" aria-labelledby="headingThree" data-parent="#accordion1">
                             <div class="card-body">
-                              <?php 
-                                if (isset($_POST['deleteUser'])) {
-                                  $username = $_POST['unamedel'];
-                                  if($_SESSION['username'] == $username){
-                                    ?>
-                                    <script type="text/javascript">
-                                      document.getElementById("collapseTwo").classList.add('show');
-                                      rel();
-                                    </script>
-                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                      </button>
-                                      <strong>Cannot delete own account!</strong>
-                                    </div>
-                                    <?php
-                                  }
-                                  else{
-                                  $delete = $func->deleteUser($username);
-                                  if($delete == true){
-                                    ?>
-                                    <script type="text/javascript">
-                                      document.getElementById("delUser").classList.add('show');
-                                      rel();
-                                    </script>
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                      </button>
-                                      <strong>User deleted!</strong>
-                                    </div>
-                                    <?php
-                                  }
-                                  else{
-                                    ?>
-                                    <script type="text/javascript">
-                                      document.getElementById("collapseTwo").classList.add('show');
-                                    </script>
-                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                      </button>
-                                      <strong>User does not exists!</strong>
-                                    </div>
-                                    <?php
-                                  }
-                                  }
+                              <table class="table text-center">
+                                <thead>
+                                  <tr class="text-primary">
+                                    <td><small><strong>User Id</strong></small></td>
+                                    <td><small><strong>First Name</strong></small></td>
+                                    <td><small><strong>Last Name</strong></small></td>
+                                    <td><small><strong>Username</strong></small></td>
+                                    <td><small><strong>Privilege</strong></small></td>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                              <?php
+                                $users = $func->viewUsers();
+                                for ($i=0; $i <count($users,COUNT_NORMAL) ; $i++) {
+                                  ?>
+                                    <tr class="text-center">
+                                      <td><?php echo ucfirst($users[$i]["userid"]); ?></td>
+                                      <td><?php echo ucfirst($users[$i]["fname"]); ?></td>
+                                      <td><?php echo ucfirst($users[$i]["lname"]); ?></td>
+                                      <td><?php echo ucfirst($users[$i]["username"]); ?></td>
+                                      <td><?php echo ucfirst($users[$i]["type"]); ?></td>
+                                    </tr>
+                                  <?php
                                 }
                               ?>
-                              <form method="post" action="">
-                                <div class="form-row">
-                                  <div class="col">
-                                    <input type="text" class="form-control" placeholder="Username" name="unamedel" required>
-                                  </div>
-                                  <div class="col">
-                                    <input type="submit" class="btn btn-primary btn-sm float-right" value="Delete User" name="deleteUser" required>
-                                  </div>
-                                </div>
-                              </form>
+                                </tbody>
+                              </table>
                             </div>
                           </div>
                         </div>
@@ -681,6 +859,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                   </div>
                 </div>
               </div>
+            </div>
                   <?php
                   }
                   ?>
