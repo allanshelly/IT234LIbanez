@@ -1,5 +1,6 @@
 <?php 
 include "config.php";
+$func = new Funcs;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +37,7 @@ include "config.php";
               if(isset($_POST['btnSignin'])){
                 $user = $_POST['user'];
                 $pass = $_POST['pass'];
-                $log = login($user,sha1($pass));
+                $log = $func->login($user,sha1($pass));
                 if($log == true){
                   header('location:index.php');
                 }

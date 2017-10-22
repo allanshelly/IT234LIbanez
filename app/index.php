@@ -1,5 +1,6 @@
 <?php 
 include "config.php";
+$func = new Funcs;
 session_start();
 if (!isset($_SESSION['username'])) {
     header('location:login.php');
@@ -78,7 +79,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                 <div class="jumbotron" style="background-color: rgba(255,255,255,0.0); padding-top: 2%;">
                   <div class="tab-content" id="conTab">
                     <!--Shop-->
-                    <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+                    <div class="tab-pane show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Shop</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
                             <table class="table" id="storetable">
@@ -92,7 +93,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 </tr>
                               </thead>
                             <?php
-                            $items = loadShop();
+                            $items = $func->loadShop();
                             for($x = 0;$x<count($items,COUNT_NORMAL); $x++){
                               if($items[$x]["prod_quan"]==0){
 
@@ -123,6 +124,11 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                         <?php
                                           if (isset($_POST[$x])) {
                                             addtoCart($items[$x]["prod_id"],$_SESSION["id"],$items[$x]["prod_price"]);
+                            ?>
+                                            <script type="text/javascript">
+                                              window.location.href = 'http://localhost/inventory%20final/app/index.php';
+                                            </script>
+                            <?php
                                           }
                                         ?>
                                         <div class="row">
@@ -155,46 +161,88 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                           </script>
                     </div>
                       <!--Cart-->
-                    <div class="tab-pane fade" id="cart" role="tabpanel" aria-labelledby="sales-tab">
+                    <div class="tab-pane" id="cart" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Cart</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
-                          <table class="table">
-                            <thead class="text-primary">
-                              <tr>
-                                <td><strong>Product Image</strong></td>
-                                <td><strong>Product Name</strong></td>
-                                <td><strong>Product Price</strong></td>
-                                <td><strong>Product Quantity</strong></td>
-                                <td><strong>Total</strong></td>
-                              </tr>
-                            </thead>
-                            <tbody>
                             <?php
                               $total = 0; 
-                              $cart = getCart();
-                              for($x = 0; $x<count($cart,COUNT_NORMAL);$x++){
-                                $img = getImg($cart[$x]["prod_id"]);
-                                $name = getName($cart[$x]["prod_id"]);
-                                $price = getPrice($cart[$x]["prod_id"]);
-                                $total = $total+$cart[$x]["total"];
-                            ?>
-                                <tr>
-                                  <td class="text-center"><img src="<?php echo $img ?>" style="max-width: auto; max-height: 120px;"></td>
-                                  <td><?php echo $name ?></td>
-                                  <td><?php echo $price?></td>
-                                  <td><?php echo $cart[$x]["item_quan"] ?></td>
-                                  <td><?php echo $cart[$x]["total"]?></td>
-                                </tr>
-                            <?php
+                              $cart = $func->getCart();
+                              if($cart == NULL){
+                          ?>
+                                <br>
+                                <div class="text-primary text-center">
+                                  <h4>Cart is Empty!</h4>
+                                </div>
+                          <?php
                               }
+                              else{
+                          ?>
+                                <table class="table">
+                                  <thead class="text-primary">
+                                    <tr>
+                                      <td><strong>Product Image</strong></td>
+                                      <td><strong>Product Name</strong></td>
+                                      <td><strong>Product Price</strong></td>
+                                      <td><strong>Product Quantity</strong></td>
+                                      <td></td>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                          <?php
+                                for($x = 0; $x<count($cart,COUNT_NORMAL);$x++){
+                                $img = $func->getImg($cart[$x]["prod_id"]);
+                                $name = $func->getName($cart[$x]["prod_id"]);
+                                $price = $func->getPrice($cart[$x]["prod_id"]);
+                            ?>
+                                  <tr>
+                                    <td class="text-center"><img src="<?php echo $img ?>" style="max-width: auto; max-height: 120px;"></td>
+                                    <td><?php echo $name ?></td>
+                                    <td><?php echo $price?></td>
+                                    <td><input type="number" name="<?php echo 'quan'.$x?>" class='form-control form-control-sm' value='<?php echo $cart[$x]["item_quan"] ?>' min="1" max="<?php $func->getStockCount($cart[$x]["prod_id"])?>"></td>
+                                    <td>
+                                      <form method="POST" action="">
+                                        <input class="btn btn-primary btn-sm" type="submit" name="<?php echo 'rem'.$x ?>" value="Remove From Cart">
+                                      </form>
+                                    </td>
+                                  </tr>
+                            <?php
+                                  $rem = 'rem'.$x;
+                                  if (isset($_POST[$rem])) {
+                                    $func->removeItem($cart[$x]['prod_id'],$cart[$x]['user_id']);
+                            ?>
+                                    <script type="text/javascript">
+                                      window.location.href = 'http://localhost/inventory%20final/app/index.php';
+                                    </script>
+                            <?php
+                                  }
+                                }
                             ?>
                             <tr>
-                              <td class="text-primary text-left" colspan="4"><strong>Total</strong></td>
-                              <td><strong><?php echo $total?></strong></td>
+                              <td colspan="4"></td>
+                              <td class="text-center">
+                                  <button class="form-control btn btn-primary btn-sm" data-toggle="modal" data-target="#checkoutmodal">Check Out</button>
+                              </td>
                             </tr>
                           </tbody>
                           </table>
-                          
+                          <?php 
+                            }
+                          ?>
+                          <div class="modal fade" id="checkoutmodal" tabindex="-1" role="dialog" aria-labelledby="checkoutmodal" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title text-primary" id="exampleModalLabel">Check Out</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="modal-body">
+                                  sadasdas
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                     </div>
                   </div>
                 </div>
@@ -203,6 +251,13 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                   }
                   else{
                   ?>
+                  <div id="storename" class="text-center text-primary font-weight-bold font-italic"><strong>Tindahan ni Maya</strong></div>
+                    <div class="text-center"><img src="res/avatar.png" class="rounded-circle"></div>
+                    <script>
+                      $().ready(function() {
+                          $('#storename').arctext({radius:60})
+                      });
+                    </script>
                   <li><a href="#inventory" class="nav-link" data-toggle="tab">Inventory</a></li>
                   <li><a href="#stocks" class="nav-link" data-toggle="tab">Stocks</a></li>
                   <li><a href="#reports" class="nav-link" data-toggle="tab">Reports</a></li>
@@ -214,7 +269,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                 <div class="jumbotron" style="background-color: rgba(255,255,255,0.0); padding-top: 2%;">
                   <div class="tab-content" id="conTab">
                     <!--Inventory-->
-                    <div class="tab-pane fade show active" id="inventory" role="tabpanel" aria-labelledby="sales-tab">
+                    <div class="tab-pane show active" id="inventory" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Inventory</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
                         <table class="table table-hover">
@@ -229,7 +284,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                             </tr>
                           </thead>
                           <tbody>
-                            <?php $inven = inven("");?>
+                            <?php $inven = $func->inven("");?>
                           </tbody>
                           <?php for($x = 0; $x<count($inven,COUNT_NORMAL); $x++){ ?>
                           <tr data-toggle="collapse" data-target="#<?php echo $search[$x]["prod_id"]?>" class="clickable">
@@ -251,7 +306,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                         </table>
                     </div>
                     <!--Stocks-->
-                    <div class="tab-pane fade" id="stocks" role="tabpanel" aria-labelledby="sales-tab">
+                    <div class="tab-pane" id="stocks" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Stocks</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
                         <div id="accordion" role="tablist">
@@ -273,8 +328,8 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                     $supp = $_POST['supplier'];
                                     $desc = $_POST['desc'];
                                     $img = $_FILES['pic']['tmp_name'];
-                                    upload($img);
-                                    $add = addProduct($prodname,$prodprice,$prodquan,$desc,$supp,basename($img));
+                                    $func->upload($img);
+                                    $add = $func->addProduct($prodname,$prodprice,$prodquan,$desc,$supp,basename($img));
                                     if($add == true){
 
                                 ?>
@@ -369,7 +424,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                 <?php
                                   if(isset($_POST['stocksearch'])){
                                     $searchname = $_POST['searchname'];
-                                    $search = search($searchname);
+                                    $search = $func->search($searchname);
                                     if($search==false){
                                 ?>
                                       <br>
@@ -428,7 +483,8 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                   if (isset($_POST["updatestocks"])) {
                                     $upid = $_POST["upID"];
                                     $quan = $_POST["upStock"];
-                                    updatestocks($upid,$quan);
+                                    if($quan>0){
+                                     $func->updatestocks($upid,$quan);
                               ?>
                                     <br>
                                     <script type="text/javascript">
@@ -439,9 +495,25 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                         <span aria-hidden="true">&times;</span>
                                       </button>
                                       <strong>Product Updated!</strong>
-                                  </div>
+                                    </div>
                               <?php
                                   }
+                                  else{
+                                    $func->deleteStocks($upid);
+                                    ?>
+                                    <br>
+                                    <script type="text/javascript">
+                                        document.getElementById("delStock").classList.add('show');
+                                    </script>
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                      </button>
+                                      <strong>Product Deleted!</strong>
+                                    </div>
+                                    <?php
+                                  }
+                                }
                               ?>
                               </div>
                             </div>
@@ -449,12 +521,12 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                       </div>
                     </div>
                     <!--Reports-->
-                    <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="sales-tab">
+                    <div class="tab-pane" id="reports" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Reports</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
                     </div>
                     <!--Users-->
-                    <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="sales-tab">
+                    <div class="tab-pane" id="users" role="tabpanel" aria-labelledby="sales-tab">
                       <h3 class="text-primary"><small>Users</small></h3>
                         <hr style=" height: 6px; background: url(res/hr.png) repeat-x 0 0; border: 0;">
                         <div id="accordion" role="tablist">
@@ -475,7 +547,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                   $fname = $_POST['fname'];
                                   $lname = $_POST['lname'];
                                   $type = strtolower($_POST['type']);
-                                  $adduser = addUser($fname,$lname,$uname,$pass,$type);
+                                  $adduser = $func->addUser($fname,$lname,$uname,$pass,$type);
                                   if($adduser == true){
                                     ?>
                                     <script type="text/javascript">
@@ -560,7 +632,7 @@ if($_SESSION['type']=='admin' && $_SESSION['log'] == 0){
                                     <?php
                                   }
                                   else{
-                                  $delete = deleteUser($username);
+                                  $delete = $func->deleteUser($username);
                                   if($delete == true){
                                     ?>
                                     <script type="text/javascript">

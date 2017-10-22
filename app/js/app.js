@@ -5,7 +5,5 @@ $(document).ready(function(){
     var activeTab = localStorage.getItem('activeTab');
     if(activeTab){
         $('#navTab a[href="' + activeTab + '"]').tab('show');
-    }
-    
+    } 
 });
-}
