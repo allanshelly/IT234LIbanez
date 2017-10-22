@@ -3,10 +3,10 @@ shop module - done
 inventory module - done
 add product -done
 cart module - done
-pay module - missing
+pay module - done
 update stocks after paying - missing
 search and update module - done
-reports module - snippet ready
+reports module - done
 user control module - done
 routing - done
 register module - done
