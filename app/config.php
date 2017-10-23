@@ -149,7 +149,7 @@ class Funcs{
 		$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
 		$stat = "unpaid";
 		$quan = 1;
-		$stmt = $db->prepare("SELECT * FROM cart WHERE prod_id=? AND user_id=?");
+		$stmt = $db->prepare("SELECT * FROM cart WHERE prod_id=? AND user_id=?AND status='unpaid'");
 		$stmt->bindParam(1,$prodid);
 		$stmt->bindParam(2,$userid);
 		$stmt->execute();
@@ -273,10 +273,7 @@ class Funcs{
 		$stmt->bindParam(4,$date);
 		$stmt->bindParam(5,$address);
 		$stmt->execute();
-		$stmt = $db->prepare("UPDATE cart SET status='paid' WHERE user_id=?");
-		$stmt->bindParam(1,$userid);
-		$stmt->execute();
-		$stmt = $db->prepare("SELECT * FROM cart WHERE status='paid' AND user_id=?");
+		$stmt = $db->prepare("SELECT * FROM cart WHERE status='unpaid' AND user_id=?");
 		$stmt->bindParam(1,$userid);
 		$stmt->execute();
 		$row = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -294,12 +291,15 @@ class Funcs{
 			$stmt->bindParam(1,$row[$x]["prod_id"]);
 			$stmt->execute();
 			$sold = $stmt->fetchAll(PDO::FETCH_ASSOC);
-			$totalsold = $sold["sold"] + $row[$x]["item_quan"];
+			$totalsold = $sold[$x]["sold"] + $row[$x]["item_quan"];
 			$stmt = $db->prepare("UPDATE stock SET sold=? WHERE prod_id=?");
 			$stmt->bindParam(1,$totalsold);
 			$stmt->bindParam(2,$row[$x]["prod_id"]);
 			$stmt->execute();
 		}
+		$stmt = $db->prepare("UPDATE cart SET status='paid' WHERE user_id=?");
+		$stmt->bindParam(1,$userid);
+		$stmt->execute();
 	}
 	function viewUsers(){
 		$db = new pdo('mysql:host=localhost;dbname=inventory','root','');
